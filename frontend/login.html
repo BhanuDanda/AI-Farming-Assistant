@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KrishiAI — Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --green-deep:#1a3c2e;--green-mid:#2d6a4f;--green-light:#52b788;
+      --green-pale:#b7e4c7;--gold:#d4a017;--cream:#fdf8f0;
+      --text-dark:#1a1a2e;--text-mid:#445566;--text-light:#7a8fa0;
+      --shadow-md:0 8px 32px rgba(26,60,46,0.14);
+      --shadow-lg:0 20px 60px rgba(26,60,46,0.18);
+      --radius-sm:10px;--radius-md:18px;--transition:0.28s cubic-bezier(.4,0,.2,1);
+    }
+    html,body{height:100%;font-family:'DM Sans',sans-serif;overflow:hidden}
+    body{display:flex;background:var(--cream)}
+
+    /* ── LEFT PANEL ── */
+    .left-panel{width:55%;position:relative;overflow:hidden;background:linear-gradient(160deg,#0d2318 0%,#1a3c2e 40%,#2d6a4f 75%,#52b788 100%)}
+    .left-panel::before{content:'';position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&q=80&auto=format&fit=crop') center/cover no-repeat;opacity:0.22;mix-blend-mode:luminosity}
+    .left-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,35,24,0.25) 0%,rgba(26,60,46,0.65) 55%,rgba(13,35,24,0.92) 100%)}
+    .left-content{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:48px 52px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand-icon{font-size:2rem}.brand-text{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:#fff}
+    .left-hero{flex:1;display:flex;flex-direction:column;justify-content:center}
+    .left-tag{display:inline-block;font-size:0.78rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--green-pale);background:rgba(82,183,136,0.2);border:1px solid rgba(82,183,136,0.35);padding:6px 16px;border-radius:20px;margin-bottom:24px}
+    .left-title{font-family:'Playfair Display',serif;font-size:clamp(2.2rem,3.5vw,3.2rem);font-weight:700;color:#fff;line-height:1.15;margin-bottom:20px}
+    .left-title em{font-style:italic;color:var(--green-pale)}
+    .left-desc{font-size:1rem;color:rgba(255,255,255,0.72);line-height:1.7;max-width:380px;margin-bottom:40px}
+    .left-features{display:flex;flex-direction:column;gap:16px}
+    .lf-item{display:flex;align-items:center;gap:14px}
+    .lf-dot{width:36px;height:36px;border-radius:50%;flex-shrink:0;background:rgba(82,183,136,0.2);border:1px solid rgba(82,183,136,0.4);display:flex;align-items:center;justify-content:center;font-size:1rem}
+    .lf-text{font-size:0.9rem;color:rgba(255,255,255,0.82);font-weight:500}
+    .left-stats{display:flex;gap:36px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.12)}
+    .ls-item{display:flex;flex-direction:column}
+    .ls-num{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:var(--green-pale)}
+    .ls-label{font-size:0.74rem;color:rgba(255,255,255,0.5);margin-top:2px}
+    .float-card{position:absolute;display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.12);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.18);border-radius:12px;padding:12px 18px;z-index:3}
+    .fc-emoji{font-size:1.4rem}.fc-label{font-size:0.7rem;color:rgba(255,255,255,0.6)}.fc-val{font-size:0.85rem;font-weight:600;color:#fff}
+    .fc1{top:22%;right:8%;animation:fcFloat 5s ease-in-out infinite}
+    .fc2{bottom:28%;right:12%;animation:fcFloat 6s ease-in-out infinite 2s}
+    @keyframes fcFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+
+    /* ── RIGHT PANEL ── */
+    .right-panel{width:45%;display:flex;align-items:center;justify-content:center;padding:40px 52px;overflow-y:auto;background:var(--cream);position:relative}
+    .right-panel::before{content:'';position:absolute;top:-100px;right:-100px;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(82,183,136,0.07),transparent 70%);pointer-events:none}
+    .form-box{width:100%;max-width:400px}
+    .form-header{margin-bottom:28px}
+    .form-welcome{font-size:0.8rem;font-weight:600;color:var(--green-light);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+    .form-title{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--green-deep);margin-bottom:6px}
+    .form-title em{font-style:italic}
+    .form-subtitle{font-size:0.88rem;color:var(--text-mid)}
+
+    /* Tabs */
+    .auth-tabs{display:flex;background:rgba(82,183,136,0.1);border-radius:var(--radius-sm);padding:4px;margin-bottom:22px}
+    .tab-btn{flex:1;padding:10px;border:none;background:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:600;color:var(--text-mid);border-radius:8px;transition:all var(--transition)}
+    .tab-btn.active{background:var(--green-deep);color:#fff;box-shadow:0 2px 8px rgba(26,60,46,0.2)}
+
+    /* Google button */
+    .btn-google{width:100%;padding:13px;border-radius:var(--radius-sm);border:1.5px solid rgba(66,133,244,0.3);background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.92rem;font-weight:600;color:#3c4043;display:flex;align-items:center;justify-content:center;gap:10px;transition:all var(--transition);box-shadow:0 1px 6px rgba(0,0,0,0.08);margin-bottom:18px}
+    .btn-google:hover{border-color:rgba(66,133,244,0.6);box-shadow:0 2px 12px rgba(66,133,244,0.15);transform:translateY(-1px)}
+    .google-icon{width:20px;height:20px}
+
+    /* Divider */
+    .divider{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+    .divider span{font-size:0.78rem;color:var(--text-light);white-space:nowrap}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:rgba(82,183,136,0.2)}
+
+    /* Forms */
+    .auth-form{display:none}.auth-form.active{display:block;animation:fadeUp 0.35s ease}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .input-group{margin-bottom:16px}
+    .input-label{display:flex;align-items:center;gap:6px;font-size:0.8rem;font-weight:600;color:var(--green-deep);margin-bottom:7px}
+    .input-label i{color:var(--green-light);font-size:0.76rem}
+    .input-wrap{position:relative}
+    .input-wrap input{width:100%;padding:12px 16px 12px 40px;border:1.5px solid rgba(82,183,136,0.25);border-radius:var(--radius-sm);background:rgba(255,255,255,0.95);font-family:'DM Sans',sans-serif;font-size:0.9rem;color:var(--text-dark);outline:none;transition:border-color var(--transition),box-shadow var(--transition)}
+    .input-wrap input:focus{border-color:var(--green-light);box-shadow:0 0 0 3px rgba(82,183,136,0.12)}
+    .input-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text-light);font-size:0.8rem;pointer-events:none}
+    .toggle-pw{position:absolute;right:13px;top:50%;transform:translateY(-50%);color:var(--text-light);font-size:0.8rem;cursor:pointer;background:none;border:none;padding:2px}
+    .toggle-pw:hover{color:var(--green-mid)}
+    .input-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .forgot-link{display:block;text-align:right;font-size:0.78rem;color:var(--green-mid);text-decoration:none;margin-top:-6px;margin-bottom:18px;font-weight:500}
+    .forgot-link:hover{text-decoration:underline}
+    .role-select{display:flex;gap:8px;margin-bottom:16px}
+    .role-opt{flex:1}.role-opt input{display:none}
+    .role-opt label{display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 6px;border-radius:var(--radius-sm);border:1.5px solid rgba(82,183,136,0.25);background:rgba(255,255,255,0.8);cursor:pointer;font-size:0.78rem;font-weight:600;color:var(--text-mid);transition:all var(--transition)}
+    .role-opt:has(input:checked) label{background:rgba(45,106,79,0.1);border-color:var(--green-mid);color:var(--green-mid)}
+    .btn-auth{width:100%;padding:14px;background:linear-gradient(135deg,var(--green-deep),var(--green-mid));color:#fff;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:0.95rem;font-weight:700;cursor:pointer;transition:all var(--transition);box-shadow:0 4px 20px rgba(26,60,46,0.28);display:flex;align-items:center;justify-content:center;gap:8px}
+    .btn-auth:hover{opacity:0.9;transform:translateY(-1px);box-shadow:0 8px 28px rgba(26,60,46,0.38)}
+    .form-msg{padding:10px 14px;border-radius:8px;font-size:0.82rem;font-weight:500;margin-bottom:14px;display:none}
+    .form-msg.error{background:rgba(231,111,81,0.1);color:#c0392b;border:1px solid rgba(231,111,81,0.2)}
+    .form-msg.success{background:rgba(82,183,136,0.1);color:var(--green-deep);border:1px solid rgba(82,183,136,0.2)}
+    .form-msg.show{display:block}
+    .demo-box{background:rgba(82,183,136,0.08);border:1px dashed rgba(82,183,136,0.35);border-radius:10px;padding:11px 14px;margin-bottom:16px;font-size:0.78rem;color:var(--text-mid)}
+    .demo-box strong{color:var(--green-deep)}
+    .form-footer{margin-top:16px;text-align:center;font-size:0.78rem;color:var(--text-light)}
+    .form-footer a{color:var(--green-mid);font-weight:600;text-decoration:none}
+    .form-footer a:hover{text-decoration:underline}
+
+    /* ── EMAIL SENT OVERLAY ── */
+    .email-overlay{position:fixed;inset:0;background:rgba(26,60,46,0.55);backdrop-filter:blur(8px);z-index:999;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.3s ease}
+    .email-overlay.show{opacity:1;pointer-events:all}
+    .email-card{background:#fff;border-radius:24px;padding:44px 40px;max-width:420px;width:90%;text-align:center;box-shadow:0 24px 60px rgba(26,60,46,0.25);animation:popIn 0.4s cubic-bezier(.34,1.56,.64,1)}
+    @keyframes popIn{from{transform:scale(0.8);opacity:0}to{transform:scale(1);opacity:1}}
+    .email-icon-wrap{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,rgba(82,183,136,0.15),rgba(45,106,79,0.1));border:2px solid rgba(82,183,136,0.3);display:flex;align-items:center;justify-content:center;font-size:2.2rem;margin:0 auto 20px}
+    .email-card h3{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:var(--green-deep);margin-bottom:8px}
+    .email-card p{font-size:0.9rem;color:var(--text-mid);line-height:1.6;margin-bottom:6px}
+    .email-addr{font-size:0.88rem;font-weight:700;color:var(--green-mid);background:rgba(82,183,136,0.1);padding:8px 16px;border-radius:20px;display:inline-block;margin:8px 0 20px}
+    .email-preview{background:#f8fffe;border:1px solid rgba(82,183,136,0.2);border-radius:12px;padding:16px;text-align:left;margin-bottom:22px}
+    .ep-subject{font-size:0.8rem;font-weight:700;color:var(--green-deep);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+    .ep-body{font-size:0.78rem;color:var(--text-mid);line-height:1.6}
+    .ep-body strong{color:var(--green-deep)}
+    .btn-continue{width:100%;padding:13px;background:linear-gradient(135deg,var(--green-deep),var(--green-mid));color:#fff;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:0.92rem;font-weight:700;cursor:pointer;transition:all var(--transition)}
+    .btn-continue:hover{opacity:0.9;transform:translateY(-1px)}
+
+    /* Google popup overlay */
+    .google-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(4px);z-index:998;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.3s}
+    .google-overlay.show{opacity:1;pointer-events:all}
+    .google-popup{background:#fff;border-radius:20px;padding:36px 32px;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2);animation:popIn 0.35s cubic-bezier(.34,1.56,.64,1)}
+    .gp-header{text-align:center;margin-bottom:24px}
+    .gp-logo{font-size:2rem;margin-bottom:8px}
+    .gp-title{font-size:1.1rem;font-weight:700;color:#202124;margin-bottom:4px}
+    .gp-subtitle{font-size:0.82rem;color:#5f6368}
+    .google-account{display:flex;align-items:center;gap:14px;padding:14px;border:1.5px solid #e8eaed;border-radius:12px;cursor:pointer;transition:all 0.2s;margin-bottom:12px}
+    .google-account:hover{border-color:#4285f4;background:#f8f9ff}
+    .ga-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#4285f4,#34a853);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1rem;font-weight:700;flex-shrink:0}
+    .ga-info{flex:1}
+    .ga-name{font-size:0.9rem;font-weight:600;color:#202124}
+    .ga-email{font-size:0.78rem;color:#5f6368}
+    .ga-check{color:#4285f4;font-size:0.9rem}
+    .gp-add{font-size:0.8rem;color:#4285f4;font-weight:600;text-align:center;cursor:pointer;padding:8px}
+    .gp-add:hover{text-decoration:underline}
+    .gp-footer{font-size:0.72rem;color:#5f6368;text-align:center;margin-top:16px;line-height:1.5}
+    .gp-footer a{color:#4285f4;text-decoration:none}
+    .gp-input-section{margin-bottom:16px}
+    .gp-input-label{font-size:0.78rem;font-weight:600;color:#3c4043;margin-bottom:8px}
+    .gp-input{width:100%;padding:10px 14px;border:1.5px solid #e8eaed;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none;transition:border-color 0.2s}
+    .gp-input:focus{border-color:#4285f4;box-shadow:0 0 0 3px rgba(66,133,244,0.1)}
+    .btn-google-signin{width:100%;padding:12px;background:#4285f4;color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px}
+    .btn-google-signin:hover{background:#3367d6}
+
+    @media(max-width:900px){.left-panel{display:none}.right-panel{width:100%;padding:40px 24px}}
+  </style>
+</head>
+<body>
+
+  <!-- LEFT VISUAL PANEL -->
+  <div class="left-panel">
+    <div class="left-overlay"></div>
+    <div class="float-card fc1">
+      <span class="fc-emoji">🌱</span>
+      <div><div class="fc-label">AI Suggestion</div><div class="fc-val">Grow Wheat this Rabi</div></div>
+    </div>
+    <div class="float-card fc2">
+      <span class="fc-emoji">🌡️</span>
+      <div><div class="fc-label">Soil Temperature</div><div class="fc-val">28°C — Optimal</div></div>
+    </div>
+    <div class="left-content">
+      <div class="brand">
+        <span class="brand-icon">🌾</span>
+        <span class="brand-text">KrishiAI</span>
+      </div>
+      <div class="left-hero">
+        <div class="left-tag">🇮🇳 Built for Indian Farmers</div>
+        <h1 class="left-title">Smart Farming<br/>for a <em>Brighter</em><br/>Harvest</h1>
+        <p class="left-desc">Get AI-powered crop suggestions, disease detection, and fertilizer advice — personalised to your soil, season, and region.</p>
+        <div class="left-features">
+          <div class="lf-item"><div class="lf-dot">🌱</div><span class="lf-text">Crop Recommendations for your exact conditions</span></div>
+          <div class="lf-item"><div class="lf-dot">🦠</div><span class="lf-text">Disease Detection with instant treatment plans</span></div>
+          <div class="lf-item"><div class="lf-dot">🧪</div><span class="lf-text">Fertilizer Plans tailored to your soil nutrients</span></div>
+        </div>
+      </div>
+      <div class="left-stats">
+        <div class="ls-item"><span class="ls-num">12K+</span><span class="ls-label">Farmers Helped</span></div>
+        <div class="ls-item"><span class="ls-num">98%</span><span class="ls-label">Accuracy Rate</span></div>
+        <div class="ls-item"><span class="ls-num">40+</span><span class="ls-label">Crops Supported</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT FORM PANEL -->
+  <div class="right-panel">
+    <div class="form-box">
+      <div class="form-header">
+        <div class="form-welcome">Welcome to KrishiAI</div>
+        <h2 class="form-title">Sign in to your<br/><em>Farm Dashboard</em></h2>
+        <p class="form-subtitle">Access AI-powered farming advice personalised for you.</p>
+      </div>
+
+      <!-- TABS -->
+      <div class="auth-tabs">
+        <button class="tab-btn active" onclick="switchTab('login')">Sign In</button>
+        <button class="tab-btn" onclick="switchTab('register')">Register</button>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <div class="auth-form active" id="loginForm">
+        <!-- Google Sign In -->
+        <button class="btn-google" onclick="showGooglePopup()">
+          <svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Continue with Google
+        </button>
+
+        <div class="divider"><span>or sign in with email</span></div>
+
+        <div class="demo-box">
+          <strong>Demo:</strong> Email: <strong>farmer@krishiai.com</strong> · Password: <strong>farm123</strong>
+        </div>
+        <div class="form-msg error" id="loginError"></div>
+        <div class="form-msg success" id="loginSuccess"></div>
+
+        <div class="input-group">
+          <div class="input-label"><i class="fa fa-envelope"></i> Email Address</div>
+          <div class="input-wrap">
+            <i class="fa fa-envelope input-icon"></i>
+            <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email"/>
+          </div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><i class="fa fa-lock"></i> Password</div>
+          <div class="input-wrap">
+            <i class="fa fa-lock input-icon"></i>
+            <input type="password" id="loginPassword" placeholder="Enter your password"/>
+            <button class="toggle-pw" onclick="togglePw('loginPassword',this)"><i class="fa fa-eye"></i></button>
+          </div>
+        </div>
+        <a href="#" class="forgot-link">Forgot password?</a>
+        <button class="btn-auth" onclick="handleLogin()">
+          <i class="fa fa-sign-in-alt"></i> Sign In to Dashboard
+        </button>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div class="auth-form" id="registerForm">
+        <!-- Google Register -->
+        <button class="btn-google" onclick="showGooglePopup()">
+          <svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Sign up with Google
+        </button>
+
+        <div class="divider"><span>or create an account</span></div>
+
+        <div class="form-msg error" id="regError"></div>
+        <div class="form-msg success" id="regSuccess"></div>
+
+        <div class="input-row">
+          <div class="input-group">
+            <div class="input-label"><i class="fa fa-user"></i> First Name</div>
+            <div class="input-wrap"><i class="fa fa-user input-icon"></i><input type="text" id="regFirst" placeholder="Raju"/></div>
+          </div>
+          <div class="input-group">
+            <div class="input-label"><i class="fa fa-user"></i> Last Name</div>
+            <div class="input-wrap"><i class="fa fa-user input-icon"></i><input type="text" id="regLast" placeholder="Sharma"/></div>
+          </div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><i class="fa fa-envelope"></i> Email Address</div>
+          <div class="input-wrap"><i class="fa fa-envelope input-icon"></i><input type="email" id="regEmail" placeholder="you@example.com"/></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><i class="fa fa-map-marker-alt"></i> State</div>
+          <div class="input-wrap"><i class="fa fa-map-marker-alt input-icon"></i><input type="text" id="regState" placeholder="e.g. Punjab, Tamil Nadu"/></div>
+        </div>
+        <div class="input-group" style="margin-bottom:10px">
+          <div class="input-label" style="margin-bottom:8px">I am a</div>
+          <div class="role-select">
+            <div class="role-opt"><input type="radio" name="role" id="roleFarmer" value="farmer" checked/><label for="roleFarmer">🌾 Farmer</label></div>
+            <div class="role-opt"><input type="radio" name="role" id="roleAgro" value="agronomist"/><label for="roleAgro">🔬 Agronomist</label></div>
+            <div class="role-opt"><input type="radio" name="role" id="roleStudent" value="student"/><label for="roleStudent">📚 Student</label></div>
+          </div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><i class="fa fa-lock"></i> Password</div>
+          <div class="input-wrap">
+            <i class="fa fa-lock input-icon"></i>
+            <input type="password" id="regPassword" placeholder="Create a strong password"/>
+            <button class="toggle-pw" onclick="togglePw('regPassword',this)"><i class="fa fa-eye"></i></button>
+          </div>
+        </div>
+        <button class="btn-auth" onclick="handleRegister()">
+          <i class="fa fa-seedling"></i> Create My Farm Account
+        </button>
+      </div>
+
+      <p class="form-footer">
+        By continuing, you agree to KrishiAI's <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.<br/>
+        <span id="switchHint" style="margin-top:6px;display:block">
+          Don't have an account? <a href="#" onclick="switchTab('register')">Register free</a>
+        </span>
+      </p>
+    </div>
+  </div>
+
+  <!-- ── GOOGLE POPUP ── -->
+  <div class="google-overlay" id="googleOverlay" onclick="closeGooglePopup(event)">
+    <div class="google-popup" onclick="event.stopPropagation()">
+      <div class="gp-header">
+        <div class="gp-logo">
+          <svg width="40" height="40" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        </div>
+        <div class="gp-title">Sign in with Google</div>
+        <div class="gp-subtitle">to continue to KrishiAI</div>
+      </div>
+
+      <!-- Predefined accounts + custom email input -->
+      <div id="gpAccountsView">
+        <div class="google-account" onclick="selectGoogleAccount('Demo Farmer', 'farmer.demo@gmail.com')">
+          <div class="ga-avatar">D</div>
+          <div class="ga-info"><div class="ga-name">Demo Farmer</div><div class="ga-email">farmer.demo@gmail.com</div></div>
+          <i class="fa fa-chevron-right ga-check"></i>
+        </div>
+        <div class="gp-input-section" style="margin-top:14px">
+          <div class="gp-input-label">Or use a different account</div>
+          <input type="email" class="gp-input" id="gpCustomEmail" placeholder="Enter your Gmail address"/>
+        </div>
+        <button class="btn-google-signin" onclick="handleGoogleCustom()">
+          <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Continue
+        </button>
+        <p class="gp-footer">By continuing, Google will share your name, email address, and profile picture with KrishiAI. See KrishiAI's <a href="#">Privacy Policy</a> and <a href="#">Terms of Service</a>.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── EMAIL SENT OVERLAY ── -->
+  <div class="email-overlay" id="emailOverlay">
+    <div class="email-card">
+      <div class="email-icon-wrap">📧</div>
+      <h3>Login Email Sent!</h3>
+      <p>A login confirmation was sent to</p>
+      <div class="email-addr" id="emailAddr">you@example.com</div>
+      <div class="email-preview">
+        <div class="ep-subject">📬 Subject: You've signed in to KrishiAI</div>
+        <div class="ep-body" id="emailPreviewBody">
+          Hi <strong id="epName">Farmer</strong>,<br/><br/>
+          You've successfully signed in to <strong>KrishiAI</strong> using your account.<br/><br/>
+          If this wasn't you, please secure your account immediately.<br/><br/>
+          Happy farming! 🌾<br/>
+          <strong>— The KrishiAI Team</strong>
+        </div>
+      </div>
+      <button class="btn-continue" onclick="proceedToDashboard()">
+        <i class="fa fa-arrow-right"></i> Go to Dashboard
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // ── REDIRECT IF ALREADY LOGGED IN ──
+    if (localStorage.getItem('krishiai_user')) window.location.href = 'index.html';
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')));
+      document.getElementById('loginForm').classList.toggle('active', tab==='login');
+      document.getElementById('registerForm').classList.toggle('active', tab==='register');
+      document.getElementById('switchHint').innerHTML = tab==='login'
+        ? 'Don\'t have an account? <a href="#" onclick="switchTab(\'register\')">Register free</a>'
+        : 'Already have an account? <a href="#" onclick="switchTab(\'login\')">Sign In</a>';
+    }
+
+    function togglePw(id, btn) {
+      const input = document.getElementById(id);
+      const isText = input.type === 'text';
+      input.type = isText ? 'password' : 'text';
+      btn.innerHTML = isText ? '<i class="fa fa-eye"></i>' : '<i class="fa fa-eye-slash"></i>';
+    }
+
+    function showMsg(id, msg, type='error') {
+      const el = document.getElementById(id);
+      el.textContent = msg; el.className = `form-msg ${type} show`;
+      setTimeout(() => el.classList.remove('show'), 5000);
+    }
+
+    // ── EMAIL LOGIN ──
+    function handleLogin() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      if (!email) { showMsg('loginError', 'Please enter your email address.'); return; }
+      if (!password) { showMsg('loginError', 'Please enter your password.'); return; }
+      const name = email.split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,l=>l.toUpperCase());
+      completeLogin(name, email, 'farmer', 'email');
+    }
+
+    // ── REGISTER ──
+    function handleRegister() {
+      const first = document.getElementById('regFirst').value.trim();
+      const last = document.getElementById('regLast').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const role = document.querySelector('input[name="role"]:checked')?.value || 'farmer';
+      const state = document.getElementById('regState').value.trim();
+      if (!first) { showMsg('regError', 'Please enter your first name.'); return; }
+      if (!email) { showMsg('regError', 'Please enter your email.'); return; }
+      if (!password || password.length < 6) { showMsg('regError', 'Password must be at least 6 characters.'); return; }
+      completeLogin(`${first} ${last}`.trim(), email, role, 'email', state);
+    }
+
+    // ── GOOGLE POPUP ──
+    function showGooglePopup() {
+      document.getElementById('googleOverlay').classList.add('show');
+      document.getElementById('gpCustomEmail').value = '';
+    }
+
+    function closeGooglePopup(e) {
+      if (e.target === document.getElementById('googleOverlay'))
+        document.getElementById('googleOverlay').classList.remove('show');
+    }
+
+    function selectGoogleAccount(name, email) {
+      document.getElementById('googleOverlay').classList.remove('show');
+      completeLogin(name, email, 'farmer', 'google');
+    }
+
+    function handleGoogleCustom() {
+      const email = document.getElementById('gpCustomEmail').value.trim();
+      if (!email || !email.includes('@')) {
+        document.getElementById('gpCustomEmail').style.borderColor = '#ea4335';
+        setTimeout(() => document.getElementById('gpCustomEmail').style.borderColor = '', 2000);
+        return;
+      }
+      const name = email.split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,l=>l.toUpperCase());
+      document.getElementById('googleOverlay').classList.remove('show');
+      completeLogin(name, email, 'farmer', 'google');
+    }
+
+    // ── CORE LOGIN HANDLER ──
+    function getLoginUrl() {
+      if (window.location.protocol === 'file:') return 'http://localhost:3000/api/auth/login';
+      return `${window.location.origin}/api/auth/login`;
+    }
+
+    async function completeLogin(name, email, role, method, state='') {
+      if (method === 'google') {
+        // Direct mock login for Google
+        localStorage.setItem('krishiai_user', JSON.stringify({ name, email, role, state, loginMethod: method }));
+        window.location.href = 'index.html';
+        return;
+      }
+
+      // For email, contact the backend to send an Ethereal verification email
+      try {
+        document.getElementById('emailOverlay').classList.add('show');
+        document.getElementById('emailPreviewBody').innerHTML = `Sending verification email to ${email}... please wait.`;
+        
+        const url = getLoginUrl();
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, role, state })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          // Show email confirmation overlay with the Ethereal link
+          document.getElementById('emailAddr').textContent = email;
+          document.getElementById('emailPreviewBody').innerHTML = `
+            Hi <strong>${name.split(' ')[0]}</strong>,<br/><br/>
+            An email verification link has been "sent" via our test server.<br/>
+            <strong>Click the link below to view the email and verify your login:</strong><br/><br/>
+            <a href="${data.previewUrl}" target="_blank" style="padding: 8px 16px; background: #2d6a4f; color: white; text-decoration: none; border-radius: 4px;">Open Ethereal Email</a>
+            <br/><br/>
+            (In a real app, this would be in your inbox)
+          `;
+          // We won't proceed to dashboard automatically; the user must click the ethereal link
+          document.querySelector('.btn-continue').style.display = 'none';
+        } else {
+          document.getElementById('emailPreviewBody').innerHTML = `<span style="color:red">Error: ${data.error}</span>`;
+        }
+      } catch (err) {
+        console.error(err);
+        document.getElementById('emailPreviewBody').innerHTML = `<span style="color:red"><strong>Browser Blocked Request:</strong> ${err.message}<br/>Make sure you open this page via <code>http://localhost:3000/login.html</code> and that the backend is running at <code>http://localhost:3000</code>.</span>`;
+      }
+    }
+
+    function proceedToDashboard() {
+      // Hidden, but kept to prevent errors
+      window.location.href = 'index.html';
+    }
+
+    // Enter key support
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        if (document.getElementById('googleOverlay').classList.contains('show')) { handleGoogleCustom(); return; }
+        if (document.getElementById('loginForm').classList.contains('active')) handleLogin();
+        else handleRegister();
+      }
+    });
+  </script>
+</body>
+</html>

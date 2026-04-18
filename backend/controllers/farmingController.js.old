@@ -1,0 +1,576 @@
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const MODEL_NAME = process.env.GOOGLE_AI_MODEL || 'gemini-2.5-flash';
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
+const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+
+const SYSTEM_PROMPT = `You are KrishiAI, an expert agricultural advisor specialising in Indian farming.
+You have deep knowledge of Indian crops, seasons (Kharif, Rabi, Zaid), soil types, plant diseases, fertilizers, and sustainable farming.
+Guidelines:
+- Be specific, practical, and actionable
+- Mention Indian-available products and seeds where relevant
+- Use simple, farmer-friendly language
+- Provide structured advice with clear headings
+- Keep responses to 300-500 words`;
+
+const getAIAdvice = async (req, res) => {
+  try {
+    const { prompt, queryType } = req.body;
+    if (!prompt) return res.status(400).json({ error: 'Prompt is required' });
+
+    const fullPrompt = `${SYSTEM_PROMPT}\n\nUser query: ${prompt}`;
+    const result = await model.generateContent(fullPrompt);
+    const response = await result.response;
+    const text = response.text();
+
+    res.json({ success: true, advice: text, queryType });
+  } catch (error) {
+    console.error('Google AI API error:', error);
+    
+    const fallbackText = generateHeuristicAdvice(req.body.queryType, req.body.farmData);
+    
+    return res.json({ success: true, advice: fallbackText, queryType: req.body.queryType });
+  }
+};
+
+const getCropSuggestions = async (req, res) => {
+  try {
+    const { soilType, state, season, rainfall, temperature, soilPh, landArea, prevCrop } = req.body;
+    const prompt = `Suggest TOP 3 crops for: State: ${state}, Soil: ${soilType}, Season: ${season}, pH: ${soilPh}, Temp: ${temperature}°C, Rainfall: ${rainfall}mm, Area: ${landArea} acres, Previous crop: ${prevCrop || 'None'}. For each: name, suitability, expected yield/acre, key tips, market value.`;
+    const fullPrompt = `${SYSTEM_PROMPT}\n\n${prompt}`;
+    const result = await model.generateContent(fullPrompt);
+    const response = await result.response;
+    const text = response.text();
+    res.json({ success: true, advice: text, queryType: 'crop' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+};
+
+const getDiseaseAnalysis = async (req, res) => {
+  try {
+    const { symptoms, soilType, state, season, targetCrop } = req.body;
+    const prompt = `Diagnose crop issue in ${state}: Crop: ${targetCrop || 'Unknown'}, Season: ${season}, Soil: ${soilType}, Symptoms: ${symptoms}. Provide: disease name, causes, organic + chemical treatment, prevention, when to see an expert.`;
+    const fullPrompt = `${SYSTEM_PROMPT}\n\n${prompt}`;
+    const result = await model.generateContent(fullPrompt);
+    const response = await result.response;
+    const text = response.text();
+    res.json({ success: true, advice: text, queryType: 'disease' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+};
+
+const getFertilizerPlan = async (req, res) => {
+  try {
+    const { soilType, state, targetCrop, soilPh, landArea, rainfall } = req.body;
+    const prompt = `Create fertilizer plan for: Crop: ${targetCrop}, State: ${state}, Soil: ${soilType} pH ${soilPh}, Area: ${landArea} acres, Rainfall: ${rainfall}mm. Provide: NPK plan, organic options, schedule, micronutrient tips, cost in INR.`;
+    const fullPrompt = `${SYSTEM_PROMPT}\n\n${prompt}`;
+    const result = await model.generateContent(fullPrompt);
+    const response = await result.response;
+    const text = response.text();
+    res.json({ success: true, advice: text, queryType: 'fertilizer' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+};
+
+function generateHeuristicAdvice(queryType, farmData) {
+  const { state, soilType, targetCrop, symptoms, season, temperature, rainfall, prevCrop } = farmData || {};
+  let advice = `Based on your selected conditions (${state || 'your region'}, ${soilType || 'your soil type'} soil), here is your personalized advice:\n\n`;
+
+  const pastCropContext = prevCrop && prevCrop.trim() !== '' ? `Since you previously grew **${prevCrop}**, ` : '';
+  const currentCropStr = targetCrop ? `**${targetCrop}**` : 'your current crop';
+
+  if (queryType === 'crop') {
+    let crops = [];
+    const lowerSoil = (soilType || '').toLowerCase();
+    if (lowerSoil.includes('black')) {
+      crops = ['Cotton', 'Soybean', 'Sorghum'];
+    } else if (lowerSoil.includes('alluvial')) {
+      crops = ['Wheat', 'Rice', 'Sugarcane'];
+    } else if (lowerSoil.includes('red') || lowerSoil.includes('laterite')) {
+      crops = ['Groundnut', 'Millets', 'Pulses'];
+    } else {
+      crops = ['Maize', 'Mustard', 'Vegetables'];
+    }
+    
+    advice += `1. **${crops[0]}:** Highly suitable for ${soilType} soil in ${season || 'the current'} season. Expected yield is excellent with proper irrigation.\n`;
+    advice += `2. **${crops[1]}:** A great alternative that requires moderate rainfall (${rainfall || 'adequate '}mm) and tolerates temperatures around ${temperature || 25}°C.\n`;
+    advice += `3. **${crops[2]}:** ${pastCropContext}this is an excellent choice for crop rotation and breaking disease cycles.\n\n`;
+    advice += `**Key Tip:** Ensure field drainage is maintained to prevent waterlogging.`;
+  } 
+  else if (queryType === 'disease') {
+    const symp = (symptoms || '').toLowerCase();
+    
+    let diseaseName = 'Fungal Blight';
+    if (symp.includes('yellow') || symp.includes('spot')) diseaseName = 'Leaf Spot / Yellow Rust';
+    if (symp.includes('curl') || symp.includes('roll')) diseaseName = 'Leaf Curl Virus';
+    if (symp.includes('white') || symp.includes('powder')) diseaseName = 'Powdery Mildew';
+    if (symp.includes('worm') || symp.includes('hole')) diseaseName = 'Borer Infestation';
+
+    advice = `### 🦠 Diagnosed Issue: ${diseaseName} affecting ${currentCropStr}\n\n`;
+    advice += `1. **Organic Treatment:** Spray Neem oil (10,000 ppm) at 3-5 ml per liter of water during early mornings.\n`;
+    advice += `2. **Chemical Treatment:** If symptoms persist, apply a suitable broad-spectrum fungicide or insecticide as per local guidelines.\n`;
+    advice += `3. **Crop Rotation Impact:** ${pastCropContext}you must actively remove the debris of the old crop to avoid carrying over pathogens to ${currentCropStr}. Practice deep ploughing.`;
+  }
+  else if (queryType === 'fertilizer') {
+    advice = `### 🧪 Fertilizer Plan for ${currentCropStr}\n\n`;
+    advice += `1. **NPK Ratio:** ${pastCropContext}adjust your base nitrogen applied as it may be depleted. Apply a balanced NPK fertilizer (e.g., 10:26:26 or 12:32:16) as a basal dose before sowing.\n`;
+    advice += `2. **Organic Compost:** Incorporate 2-3 tonnes of farmyard manure (FYM) or vermicompost per acre to improve ${soilType || 'soil'} structure.\n`;
+    advice += `3. **Micronutrients:** Since your pH may affect nutrient uptake, consider a foliar spray of Zinc and Boron 30 days after sowing.\n\n`;
+    advice += `**Schedule:** Split the nitrogen dose: 50% at base, 25% at tillering, and 25% before flowering.`;
+  } else {
+    advice += `1. **Understand your soil:** Make sure to test your pH levels to adapt fertilization properly.\n`;
+    advice += `2. **Climate matters:** Consider drought-resistant varieties if water is low.\n`;
+    advice += `3. **Observation:** Visit your farm regularly to catch diseases early.`;
+  }
+
+  return advice;
+}
+
+function fallbackChatResponse(messages) {
+  const last = messages[messages.length - 1]?.content?.toLowerCase() || '';
+  
+  // Extract key terms for context-aware responses
+  const hasRabi = /rabi|winter|november|december|january|february|march/.test(last);
+  const hasKharif = /kharif|monsoon|june|july|august|september/.test(last);
+  const hasZaid = /zaid|summer|april|may/.test(last);
+  const hasPunjab = /punjab|haryana|himachal|north|uttar pradesh|up/.test(last);
+  const hasTelangana = /telangana|andhra|deccan|south/.test(last);
+  const hasRajasthan = /rajasthan|desert|arid|semi-arid/.test(last);
+  const hasTamilNadu = /tamil|karnataka|andhra|south|coconut|spice/.test(last);
+  
+  // Crop-related queries
+  if (/crop|best|suit|good|recommend/.test(last)) {
+    let response = '';
+    if (hasPunjab && hasRabi) {
+      response = `**Best Rabi Crops for Punjab:**
+1. **Wheat** - Expected yield: 40-50 tons/acre. Plant in Nov-Dec, harvest in April-May. Needs 40-50cm rainfall. Apply 150kg NPK + 25kg Zinc per acre.
+2. **Barley** - Suitable for marginal lands. Yield: 25-35 tons/acre. Good for animal feed & malting.
+3. **Mustard** - Oil crop, yield: 15-20 tons/acre. Needs less water, good for rotation. Plant variety RH 30 or RH 725.
+4. **Gram (Chickpea)** - Pulse crop, yield: 10-15 tons/acre. Good nitrogen fixer, reduces fertilizer needs.
+5. **Potato** - High value crop. Yield: 150-200 tons/acre. Plant certified seed in Oct-Nov. Store at 4°C.
+
+**For All Rabi Crops:** Use certified quality seeds, maintain 5-8cm soil moisture during growth, and apply split nitrogen doses (50% basal, 25% at branching, 25% at flowering).`;
+    } else if (hasTelangana && hasRabi) {
+      response = `**Best Rabi Crops for Telangana:**
+1. **Groundnut** - Suited to black soil. Yield: 1.5-2.5 tons/acre. Needs 45-60cm rainfall. Plant 25kg seed/acre. Moderate spacing: 30x10cm.
+2. **Maize** - High yielding. Yield: 30-40 tons/acre. Harvest at 35-40% moisture for drying. Store in cool, dry conditions.
+3. **Sunflower** - Tolerates various soils. Yield: 8-12 tons/acre. Spacing: 60x30cm. Needs 50-70cm water.
+4. **Cotton** - Black soil specialist. Yield: 8-12 tons/acre lint. Start pruning after 100 days. Monitor for pests - spray neem or approved insecticide every 15 days.
+5. **Chickpea** - Easy to grow, good returns. Yield: 10-15 tons/acre. Variety: Bheema or JAKI 9218.
+
+**Soil Prep:** Apply 8-10 tonnes FYM per acre. If soil pH > 8.5, add gypsum (1 ton/acre). Test soil for micronutrients (Zn, B, Fe).`;
+    } else if (hasKharif) {
+      response = `**Best Kharif Season Crops:**
+1. **Rice** - Primary kharif crop. Varieties: PR-114, NDR-359 for premium quality. Yield: 40-50 tons/acre with proper management. Needs 100-150cm rainfall.
+2. **Maize** - Quick maturing (90-100 days). Hybrids: PAC 444, MH-2108 yield 35-45 tons/acre. Space: 60x20cm.
+3. **Cotton** - Major cash crop. Yield: 8-12 tons/acre lint. Monitor budworm pest from 90 days - spray indoxacarb or spinosad.
+4. **Soybean** - Pulse + oilseed. Yield: 8-12 tons/acre. Spacing: 45x20cm. Good rotation crop.
+5. **Sugarcane** - Long duration (11-12 months). Yield: 60-80 tons/acre at 10-12% CCS. Needs 180-250cm water.
+
+**Kharif Advice:** Use pre-monsoon irrigation to build soil moisture. Sow at proper spacing to reduce diseases. Monitor pest populations - early detection saves crops.`;
+    } else {
+      response = `**Crop Selection Guide:**
+
+**For Your Soil & Climate - Choose Based On:**
+- **Black soil→** Cotton, soybean, gram, sorghum do best
+- **Red soil→** Groundnut, millets, pulses are ideal
+- **Alluvial soil→** Wheat, rice, sugarcane thrive
+- **Laterite soil→** Coconut, cashew, spices suited
+
+**High-Value Options:**
+- Vegetables (tomato, chilli, onion): 50-100 tons/acre revenue
+- Spices (turmeric, ginger, cardamom): High price but specialized care needed
+- Fruits (mango, citrus, banana): Long-term investment, 30-50 tons/acre
+
+**Always Check:** Season (Rabi/Kharif), water availability, market demand, and rotation history.`;
+    }
+    return response;
+  }
+  
+  // Disease diagnosis queries
+  if (/disease|yellow|leaf|spot|rust|worm|blight|wilt|curl|white|powder|rot|brown/.test(last)) {
+    let response = '';
+    if (/yellow|rust|spot|leaf/i.test(last) && /wheat/i.test(last)) {
+      response = `**Wheat Disease Diagnosis:**
+
+If you see **yellow/orange streaks on leaves** → **Rust Disease**
+- **Cause:** Fungal infection, spreads in humid weather
+- **Treatment:** Spray Propiconazole (25% EC) 1ml/liter or Hexaconazole (5% EC) 2ml/liter every 10-14 days
+- **Organic:** Sulfur dust 25kg/acre early morning
+
+If leaves are **pale/uniformly yellow** → **Nitrogen Deficiency**
+- **Treatment:** Split urea application. Apply 20-25kg urea/acre at tillering (30 days) and again at boot stage (60 days)
+- **Quick fix:** Foliar spray 2% urea solution (mix 2kg urea in 100L water)
+
+**Prevention:** Use N-resistant varieties, maintain spacing for air circulation, avoid overhead irrigation.`;
+    } else if (/brown|spot|leaf|blight/i.test(last) && /rice/i.test(last)) {
+      response = `**Rice Disease Guide:**
+
+**Brown Spot (Helminthosporium):**
+- Yellow halos around brown spots on leaves and grain
+- Spray Carbendazim (20% WP) 1kg/500L water OR Propiconazole 1ml/liter
+- Ensure 2-3cm water level in field, avoid nitrogen excess
+
+**Leaf Blast:**
+- Diamond-shaped gray lesions on leaves
+- Spray Tricyclazole (75% WP) 0.6g/1L water
+- Remove infected plant debris, burn it
+
+**Sheath Blight:**
+- Water-soaked lesions on leaf sheath
+- Keep water level below 5cm, reduce nitrogen, spray Tebuconazole
+- Improve ventilation by proper spacing
+
+**Prevention:** Use certified seed, practice crop rotation, drain excess water immediately.`;
+    } else if (/worm|cotton|boll/i.test(last)) {
+      response = `**Cotton Pest Management:**
+
+**Bollworm (American/Pink Bollworm):**
+- Larvae feed inside bolls, causing damage
+- **Scouting:** Check 5 plants/location weekly, spray if 10% bolls damaged
+- **Chemical:** Spinosad 45% SC (1ml/3L water) OR Indoxacarb 14.5% SC (1ml/liter)
+- **Organic:** BT (Bacillus thuringiensis) 100-200g/5L water
+- **Timing:** 90 days after sowing through harvest
+
+**Whitefly & Leaf Hopper:**
+- Sticky yellow leaves, reduced growth
+- **Spray:** Imidacloprid (17.8% SL) 0.5ml/liter OR Dimethoate (30% EC) 2ml/liter
+- **Frequency:** Every 10-14 days during peak season
+
+**Integrated Approach:** Scout regularly, remove infested plants, release natural enemies (ladybugs, parasitic wasps).`;
+    } else {
+      response = `**General Disease Management Steps:**
+
+1. **Identify the Problem:**
+   - Leaf color & shape of spots
+   - Which plant parts affected (new growth vs old)
+   - Spread pattern (scattered vs clustered)
+
+2. **Treatment Options (choose one):**
+   - **Organic:** Neem oil (10,000 ppm) 10ml/liter OR Sulfur dust 25kg/acre
+   - **Fungicide:** Mancozeb 75% WP (2kg/500L) OR Carbendazim 50% WP (1kg/500L)
+   - **Bacterial:** Copper sulfate 1% solution for bacterial diseases
+   - **Virus:** No cure - remove infected plants, control vectors (insects)
+
+3. **Prevention (Critical!):**
+   - Use certified, disease-free seed
+   - Maintain proper plant spacing
+   - Crop rotation (3-year gap minimum)
+   - Remove crop residue after harvest
+   - Avoid overhead irrigation (keeps leaves wet)
+
+4. **When to Spray:**
+   - Early morning (before 9 AM) or evening (after 4 PM)
+   - When leaves are dry
+   - Every 7-14 days depending on disease severity
+   - Stop spraying 10-15 days before harvest
+
+**For Any Disease:** Consult local agricultural officer with leaf samples for precise diagnosis.`;
+    }
+    return response;
+  }
+  
+  // Fertilizer-related queries
+  if (/fertilizer|npk|nitrogen|phosphorus|potassium|nutrient|deficiency|manure|compost/.test(last)) {
+    let response = '';
+    if (/rice|clay|black soil/i.test(last)) {
+      response = `**Complete Fertilizer Plan for Rice on Clay Soil:**
+
+**Soil Preparation (Before Planting):**
+- Add 10 tonnes FYM or vermicompost per acre
+- Deep plow to break hardpan layer
+- Level the field to prevent water stagnation
+
+**Basal Fertilizer Application:**
+- **Nitrogen:** 50kg/acre (apply as basal)
+- **Phosphorus:** 30kg/acre (P₂O₅) - critical for clay soil
+- **Potassium:** 20kg/acre (K₂O) - increases grain quality
+- **Zinc:** 5kg/acre - clay soils often deficient in Zn
+
+**Example Basal Formulation (for 1 acre):**
+- Urea (46% N): 110kg
+- DAP (18% P): 165kg
+- MOP (60% K): 35kg
+- Zinc Sulfate: 25kg
+
+**Top Dressing Schedule:**
+- **At Tillering (30 days after planting):** Apply 30kg urea/acre
+- **At Panicle Initiation (50-55 days):** Apply 20kg urea/acre
+- **At Flowering (80 days):** Apply 20kg urea/acre
+
+**Micronutrient Foliar Spray (2 times):**
+- At 45 days: Spray 2% urea + 0.5% zinc sulfate solution
+- At 65 days: Repeat foliar spray to boost grain filling
+
+**Estimated Cost (INR per acre):**
+- FYM: 1,000-1,500
+- Chemical fertilizers: 2,800-3,500
+- **Total: ~4,500-5,000 per acre
+
+**Pro Tips for Clay Soil:**
+1. Avoid waterlogging - maintains 5cm water only
+2. Apply P & K in split doses (clay fixes nutrients)
+3. Monitor for Fe & Mn deficiency - common with high pH clay
+4. Use chelated micronutrients if deficiency symptoms appear`;
+    } else if (/potato|vegetable/i.test(last)) {
+      response = `**Potato Fertilizer Plan (High Value Crop):**
+
+**Per Acre Requirements:**
+- **Nitrogen:** 120-150kg/acre (split: 50% basal + 50% at earthing)
+- **Phosphorus:** 60kg/acre (all at planting)
+- **Potassium:** 100-120kg/acre (critical for tuber quality & disease resistance)
+- **Organic matter:** 15-20 tonnes FYM/farm yard manure
+
+**Planting Stage:**
+- Broadcast 20 tonnes FYM/acre
+- Apply 200kg DAP + 100kg K fertilizer in furrows before planting
+- Space seed potatoes 25cm x 60cm
+
+**During Growth (Earthing/Ridge):**
+- At 60 days: Apply 50kg urea/acre + 20kg potassium nitrate
+- Repeat every 20 days until tuber bulking complete
+
+**Micronutrients:**
+- Boron (B): 1kg/acre - prevents hollow heart & internal defects
+- Calcium: 500kg gypsum/acre - prevents soft rot
+- Magnesium: 50kg MgSO₄/acre - improves starch content
+
+**Cost Estimate:**
+- FYM: 2,000-3,000
+- Fertilizers: 3,500-4,500
+- Micronutrients: 800-1,200
+- **Total: ~6,500-8,000/acre
+
+**Yield Target:** 250-300 bags/acre (packed @ 50kg each)
+**Revenue:** 1,50,000-2,00,000 at ₹250-300/bag`;
+    } else {
+      response = `**Step-by-Step Fertilizer Plan Guide:**
+
+**Step 1: Soil Test (CRITICAL!)**
+Get soil tested for NPK, pH, organic matter, micronutrients before spring season
+Cost: ₹200-500 per test | Validity: 1-2 years
+
+**Step 2: Calculate Requirement Based on Crop & Soil Test**
+- **High Yield Crops:** 90-120kg N, 40-60kg P, 40-60kg K per acre
+- **Pulses:** 20-30kg N, 40-50kg P, 20-30kg K per acre  
+- **Oil Seeds:** 40-60kg N, 30-40kg P, 20-30kg K per acre
+
+**Step 3: Choose Fertilizer Sources**
+
+| Nutrient | Material | %Content | Cost/bag |
+|----------|----------|----------|----------|
+| **N** | Urea | 46% | ₹240 |
+| **P** | DAP | 18% | ₹500 |
+| **K** | MOP | 60% | ₹500 |
+| **Organic** | FYM | 2-3% | Free (farm-made) |
+
+**Step 4: Application Method**
+- **Basal (at planting):** All P, K + 50% N (in furrows or broadcast)
+- **Top Dressing (30-45 days):** Remaining 50% N (side dress or foliar spray)
+
+**Step 5: Split Application Advantage**
+- Reduces leaching losses
+- Better nutrient uptake
+- 15-20% higher yields vs single dose
+
+**Cost Control Tips:**
+✓ Use organic manure first (12 tonnes/acre = saves ₹1,500-2,000)
+✓ Apply micronutrients only if deficiency confirmed
+✓ Use neem-coated urea (slower release, better efficiency)
+✓ Share custom hiring for chemical spreaders`;
+    }
+    return response;
+  }
+  
+  // Soil-related queries
+  if (/soil|condition|health|quality|test|ph|alkaline|acidic|loamy|clay|sandy/.test(last)) {
+    let response = '';
+    if (/telangana|andhra|deccan|black soil/i.test(last)) {
+      response = `**Soil Condition in Telangana (April 2026):**
+
+**Current Season Status (Post-Rabi, Pre-Monsoon):**
+- **Moisture Level:** Very Low (5-10% field capacity) - dry spells expected until June
+- **Temperature:** Rising (32-36°C) - irrigation critical for summer crops
+- **Recommendation:** Plan monsoon preparation now
+
+**Typical Telangana Soil Characteristics:**
+- **Soil Type:** Deep black soil (Vertisol) - excellent water holding capacity
+- **pH:** 7.5-8.5 (slightly alkaline) - suitable for most crops
+- **Organic Matter:** 1.5-2.5% - can be improved with compost
+
+**April Management Actions:**
+1. **Irrigation Planning:**
+   - Sugarcane, groundnut: Provide irrigation every 8-10 days
+   - Summer vegetables: 3-4 days irrigation interval
+   - Summer pulses: Every 12-15 days
+
+2. **Soil Preparation for Monsoon:**
+   - Summer plough once to improve aeration (20-25cm depth)
+   - Apply 10-12 tonnes FYM/acre now - decomposes by June rains
+   - Fill farm ponds & build soak pits for monsoon water harvesting
+
+3. **Micronutrient Check:**
+   - Black soils often deficient in Zinc (Zn) & Iron (Fe)
+   - Apply Zinc Sulfate 25kg/acre + FYM before monsoon
+
+4. **Pest Management:**
+   - Scout for spider mites, thrips (common in dry heat)
+   - Plan integrated pest management as monsoon crops start
+
+**Expected Monsoon Arrival:** Early June (typical 5-10 June)`;
+    } else {
+      response = `**Understanding Your Soil Condition - Step by Step:**
+
+**Step 1: What Affects Soil Health?**
+- Moisture (depends on rainfall, irrigation, soil texture)
+- Temperature (seasonal variation)
+- Organic matter content (compost, manure)
+- pH level (acidity/alkalinity)
+- Nutrient availability (N, P, K, micronutrients)
+
+**Step 2: Visual Soil Diagnosis**
+- **Dark brown/black color** = Good organic matter (healthy!)
+- **Light gray/sandy color** = Low organic matter (add FYM)
+- **Cracks forming** = Dry black soil (needs irrigation)
+- **Waterlogged/soft** = Poor drainage (improve by adding sand/FYM)
+
+**Step 3: Monthly Soil Activities**
+
+**During Dry Season (March-May):**
+- Conserve moisture with mulching/compost
+- Prepare land for monsoon crops
+- Build bunds to conserve rainwater
+
+**During Monsoon (June-October):**
+- Improve drainage in low areas
+- Avoid waterlogging (main yield killer in this season)
+- Continue adding organic matter
+
+**During Post-Monsoon (November-February):**
+- Plant rabi crops while soil moisture remains
+- Apply fertilizers as per crop requirement
+- Monitor temperature for cold-sensitive crops
+
+**Step 4: Soil Test Recommendation**
+Get soil tested **once every 2 years** during pre-planting season
+- **Test for:** NPK, pH, organic matter, micronutrients (Zn, Fe, B)
+- **Cost:** ₹200-500
+- **Benefit:** Right fertilizer use saves ₹2,000-3,000/acre/year
+
+**Common Soil Problems & Quick Fixes:**
+| Problem | Cause | Fix |
+|---------|-------|-----|
+| Low yields despite water | Low soil fertility | Add FYM, test & apply N, P, K |
+| Hard, cracked soil | Low organic matter | Mix sand + compost (1:1) |
+| Yellowing plants | Nutrient deficiency | Foliar spray micronutrients |
+| Disease buildup | Poor rotation | Change crop, remove debris |`;
+    }
+    return response;
+  }
+  
+  // How-to / Selection queries
+  if (/how|choose|select|suitable|method|steps|process|guide/.test(last)) {
+    return `**How to Choose the Right Crop for Your Farm:**
+
+**Step 1: Know Your Resources**
+- ✓ How much water available? (Rainfall + irrigation capacity)
+- ✓ Soil type? (Black/red/alluvial/laterite)
+- ✓ Land area? (Helps with crop planning)
+- ✓ Capital available? (Some crops need more investment)
+- ✓ Market access? (Can you sell the crop?)
+
+**Step 2: Match to Season**
+- **Kharif (June-October):** Rice, cotton, sugarcane, soybean, maize
+- **Rabi (October-March):** Wheat, mustard, gram, vegetables
+- **Zaid (March-June):** Vegetables, groundnut, summer pulses
+
+**Step 3: Check Soil Suitability**
+- **Black Soil→** Cotton, soybean, gram, sorghum BEST
+- **Red Soil→** Groundnut, millets, pulses ideal  
+- **Alluvial→** Wheat, rice, sugarcane, sugarbeet
+- **Laterite→** Coconut, cashew, arecanut, spices
+
+**Step 4: Consider Profit Potential**
+High Value (₹50,000+/acre): Vegetables, flowers, spices, fruits
+Medium Value (₹20,000-40,000): Pulses, oilseeds, sugarcane
+Low Investment (But steady): Cereals, fodder
+
+**Step 5: Plan Crop Rotation**
+- Don't grow same crop twice in same land
+- Rotate: Cereal → Pulse → Oilseed → Cereal (4-year cycle)
+- Benefit: Breaks pest cycle, maintains soil fertility
+
+**Step 6: Consult Experts**
+- Local agricultural officer (FREE consultation)
+- Check government crop bulletin for district
+- Talk to neighboring successful farmers
+
+**Example for Punjab Farmer:**
+Climate: Cool winters, hot summers → Wheat in Rabi, Sugarcane + Vegetables
+Soil: Alluvial → Grows wheat well
+Decision: Wheat (Rabi) + Sugar cane + Vegetables (Summer)
+**Result:** 3 seasons income, sustainable farming`;
+  }
+  
+  // Default fallback for any other query
+  return `**General Farming Advice:**
+
+**For Better Crop Health:**
+1. **Soil is Key:** Test soil every 2 years for NPK & pH. Dark, crumbly soil with earthworms = healthy soil.
+
+2. **Water Management:**
+   - Monsoon crops: 50-100cm rainfall needed
+   - Summer crops: 4-5 irrigations per season
+   - Winter crops: 2-3 irrigations total
+   - Avoid waterlogging - it kills crops faster than drought
+
+3. **Fertilizer Timing:**
+   - 50% nutrients at planting
+   - 25% at mid-growth (30-45 days)
+   - 25% at flowering/grain filling
+
+4. **Pest & Disease Prevention:**
+   - Scout your farm weekly (early detection = easy control)
+   - Use neem/organic sprays first before chemicals
+   - Spray during early morning or evening (not in heat)
+
+5. **After Harvest:**
+   - Remove all crop residue (prevents pest carryover)
+   - Prepare field for next season immediately
+   - Apply FYM during off-season
+
+**Action Now:**
+📍 Tell me: Your state, soil type, current crops → I'll give specific advice!`;
+  }
+}
+
+const chatWithAI = async (req, res) => {
+  try {
+    const { messages } = req.body;
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ error: 'Messages array is required' });
+    }
+
+    const history = messages.slice(0, -1).map(msg => ({
+      role: msg.role === 'assistant' ? 'assistant' : 'user',
+      parts: [{ text: msg.content }]
+    }));
+    
+    const lastMessage = messages[messages.length - 1].content;
+
+    const chat = model.startChat({
+      history: [
+        { role: 'system', parts: [{ text: SYSTEM_PROMPT }] },
+        { role: 'assistant', parts: [{ text: 'Namaskar! I am KrishiAI, ready to assist.' }] },
+        ...history
+      ]
+    });
+
+    const result = await chat.sendMessage(lastMessage);
+    const text = result.response.text();
+
+    res.json({ success: true, message: text });
+  } catch (error) {
+    console.error('Chat AI API error:', error);
+    const fallback = fallbackChatResponse(req.body.messages || []);
+    return res.json({ success: true, message: fallback, fallback: true });
+  }
+};
+
+module.exports = { getAIAdvice, getCropSuggestions, getDiseaseAnalysis, getFertilizerPlan, chatWithAI };
