@@ -62,6 +62,7 @@ For static hosting mode, open [frontend/config.js](frontend/config.js) and choos
 ## GitHub Pages Deployment
 
 This repo now includes [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml).
+It also includes [.github/workflows/ci.yml](.github/workflows/ci.yml) for syntax validation on pushes and PRs.
 
 1. Push to `main`.
 2. In GitHub, open Settings > Pages.
@@ -73,6 +74,12 @@ After deploy:
 - Email login runs in static mode on GitHub Pages.
 - Google/mock login works normally.
 - AI advice and chat use user-entered API key from the key banner.
+
+## Production Notes
+
+- Backend now enforces allowlisted CORS when `FRONTEND_URL` is set (comma-separated allowed origins).
+- Backend sets baseline security headers (frame, referrer, mime-sniff, permissions, and HSTS on HTTPS).
+- Add your production frontend domain(s) to `FRONTEND_URL` in backend env.
 
 ## Usage
 

@@ -7,14 +7,37 @@ const farmingRoutes = require('./routes/farmingRoutes');
 const authRoutes = require('./routes/authRoutes');
 const app  = express();
 const PORT = process.env.PORT || 3000;
+const allowedOrigins = (process.env.FRONTEND_URL || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 const corsOptions = { 
-  origin: '*', 
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Origin not allowed by CORS'));
+  },
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Google-AI-API-Key']
 };
 
+app.disable('x-powered-by');
 app.use(cors(corsOptions));
+
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+
+  const proto = req.get('x-forwarded-proto');
+  if (req.secure || proto === 'https') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  next();
+});
 
 // Explicitly handle Private Network Access
 app.use((req, res, next) => {
