@@ -433,11 +433,29 @@
       return `${window.location.origin}/api/auth/login`;
     }
 
+    function isStaticHost() {
+      const host = window.location.hostname || '';
+      return window.location.protocol === 'file:' || host.endsWith('github.io');
+    }
+
     async function completeLogin(name, email, role, method, state='') {
       if (method === 'google') {
         // Direct mock login for Google
         localStorage.setItem('krishiai_user', JSON.stringify({ name, email, role, state, loginMethod: method }));
         window.location.href = 'index.html';
+        return;
+      }
+
+      if (isStaticHost()) {
+        localStorage.setItem('krishiai_user', JSON.stringify({ name, email, role, state, loginMethod: 'static' }));
+        document.getElementById('emailOverlay').classList.add('show');
+        document.getElementById('emailAddr').textContent = email;
+        document.getElementById('emailPreviewBody').innerHTML = `
+          Hi <strong>${name.split(' ')[0]}</strong>,<br/><br/>
+          You are on static hosting mode, so login is completed locally in your browser.<br/><br/>
+          Click below to continue to your dashboard.
+        `;
+        document.querySelector('.btn-continue').style.display = 'block';
         return;
       }
 

@@ -14,6 +14,13 @@ An AI-powered web application to help Indian farmers with crop suggestions, dise
 
 ## Setup Instructions
 
+## Production Checklist
+
+- Never commit secret keys. Keep all keys in local env files or browser local storage only.
+- Use [backend/.env.example](backend/.env.example) as the backend template.
+- Keep [frontend/config.js](frontend/config.js) committed with non-secret defaults only.
+- Verify [.gitignore](.gitignore) includes env file patterns.
+
 ### Backend Setup
 
 1. Navigate to the `backend` folder:
@@ -26,13 +33,18 @@ An AI-powered web application to help Indian farmers with crop suggestions, dise
    npm install
    ```
 
-3. Create a `.env` file in the `backend` folder and leave the Google AI key blank unless you want a server-side fallback:
+3. Create `backend/.env` from [backend/.env.example](backend/.env.example):
+   ```
+   cp .env.example .env
+   ```
+
+4. Leave the Google AI key blank unless you want a server-side fallback:
    ```
    GOOGLE_AI_API_KEY=
    ```
    The app now asks each user to paste their own Google AI API key in the dashboard and stores it locally in the browser. You can still set `GOOGLE_AI_API_KEY` on the server if you want a shared fallback.
 
-4. Start the backend server:
+5. Start the backend server:
    ```
    npm start
    ```
@@ -40,7 +52,27 @@ An AI-powered web application to help Indian farmers with crop suggestions, dise
 
 ### Frontend
 
-The frontend is served by the backend, so once the backend is running, open `http://localhost:3000` in your browser.
+For local full-stack mode, once backend is running, open `http://localhost:3000` in your browser.
+
+For static hosting mode, open [frontend/config.js](frontend/config.js) and choose one:
+
+- `preferBackend: false` to call Gemini directly from the browser using user-entered key (GitHub Pages friendly)
+- `preferBackend: true` with `apiBaseUrl` set to deployed backend URL
+
+## GitHub Pages Deployment
+
+This repo now includes [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml).
+
+1. Push to `main`.
+2. In GitHub, open Settings > Pages.
+3. Set Source to GitHub Actions.
+4. Wait for the workflow to publish the `frontend` folder.
+
+After deploy:
+
+- Email login runs in static mode on GitHub Pages.
+- Google/mock login works normally.
+- AI advice and chat use user-entered API key from the key banner.
 
 ## Usage
 

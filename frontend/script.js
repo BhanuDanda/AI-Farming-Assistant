@@ -9,6 +9,93 @@ let BACKEND_URL = window.location.protocol === 'file:' ? LOCAL_BACKEND_HOSTS[0] 
 let backendDetectionPromise = null;
 let chatApiReady = true;
 const GOOGLE_AI_KEY_STORAGE = 'krishiai_google_ai_api_key';
+const RESPONSE_CACHE_MAX = 120;
+const GEMINI_MODEL = (window.KRISHI_AI_CONFIG?.geminiModel || 'gemini-2.5-flash').trim();
+const PREFER_BACKEND = window.KRISHI_AI_CONFIG?.preferBackend !== false;
+
+class LruNode {
+  constructor(key, value) {
+    this.key = key;
+    this.value = value;
+    this.prev = null;
+    this.next = null;
+  }
+}
+
+class LruCache {
+  constructor(capacity = 100) {
+    this.capacity = capacity;
+    this.map = new Map();
+    this.head = null;
+    this.tail = null;
+  }
+
+  get(key) {
+    const node = this.map.get(key);
+    if (!node) return null;
+    this.moveToFront(node);
+    return node.value;
+  }
+
+  set(key, value) {
+    let node = this.map.get(key);
+    if (node) {
+      node.value = value;
+      this.moveToFront(node);
+      return;
+    }
+
+    node = new LruNode(key, value);
+    this.map.set(key, node);
+    this.addToFront(node);
+
+    if (this.map.size > this.capacity) {
+      this.evictTail();
+    }
+  }
+
+  addToFront(node) {
+    node.prev = null;
+    node.next = this.head;
+    if (this.head) this.head.prev = node;
+    this.head = node;
+    if (!this.tail) this.tail = node;
+  }
+
+  moveToFront(node) {
+    if (this.head === node) return;
+    this.removeNode(node);
+    this.addToFront(node);
+  }
+
+  removeNode(node) {
+    if (node.prev) node.prev.next = node.next;
+    if (node.next) node.next.prev = node.prev;
+    if (this.tail === node) this.tail = node.prev;
+    if (this.head === node) this.head = node.next;
+  }
+
+  evictTail() {
+    if (!this.tail) return;
+    const oldTail = this.tail;
+    this.removeNode(oldTail);
+    this.map.delete(oldTail.key);
+  }
+}
+
+const responseCache = new LruCache(RESPONSE_CACHE_MAX);
+
+function buildCacheKey(kind, payload) {
+  return `${kind}:${JSON.stringify(payload)}`;
+}
+
+function getCachedResponse(kind, payload) {
+  return responseCache.get(buildCacheKey(kind, payload));
+}
+
+function setCachedResponse(kind, payload, value) {
+  responseCache.set(buildCacheKey(kind, payload), value);
+}
 
 function getStoredGoogleAiKey() {
   try { return localStorage.getItem(GOOGLE_AI_KEY_STORAGE) || ''; } catch { return ''; }
@@ -66,6 +153,9 @@ function getActiveGoogleAiKey() {
 }
 
 async function resolveBackendUrl() {
+  if (!PREFER_BACKEND) return null;
+  const configuredUrl = (window.KRISHI_AI_CONFIG?.apiBaseUrl || '').trim();
+  if (configuredUrl) return configuredUrl.replace(/\/+$/, '');
   if (window.location.protocol !== 'file:') return window.location.origin;
   if (backendDetectionPromise) return backendDetectionPromise;
 
@@ -82,6 +172,54 @@ async function resolveBackendUrl() {
   })();
 
   return backendDetectionPromise;
+}
+
+async function callGeminiText(prompt, apiKey) {
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{
+        role: 'user',
+        parts: [{ text: prompt }]
+      }]
+    })
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data?.error?.message || `Gemini request failed (${response.status})`);
+  }
+
+  const text = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('\n').trim();
+  if (!text) throw new Error('Gemini returned an empty response.');
+  return text;
+}
+
+async function callGeminiChat(messages, apiKey) {
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const contents = messages
+    .filter(m => m?.content)
+    .map(m => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }]
+    }));
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents })
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data?.error?.message || `Gemini request failed (${response.status})`);
+  }
+
+  const text = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('\n').trim();
+  if (!text) throw new Error('Gemini returned an empty response.');
+  return text;
 }
 
 // ── AUTH ─────────────────────────────────────
@@ -321,18 +459,40 @@ async function getAIAdvice(data) {
   setLoading(true);
   showResultPanel('loading');
   try {
+    const prompt = buildPrompt(data);
+    const cachePayload = { prompt, queryType: data.queryType, farmData: data };
+    const cached = getCachedResponse('advice', cachePayload);
+    if (cached) {
+      displayResult(cached, data.queryType, data);
+      saveToHistory({ type: data.queryType, state: data.state, soilType: data.soilType });
+      showToast('Loaded from smart cache.');
+      return;
+    }
+
+    let advice = null;
     const backendUrl = await resolveBackendUrl();
-    const response = await fetch(`${backendUrl}/api/farming/advice`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Google-AI-API-Key': apiKey
-      },
-      body: JSON.stringify({ prompt: buildPrompt(data), queryType: data.queryType, farmData: data })
-    });
-    if (!response.ok) throw new Error(`${response.status}`);
-    const result = await response.json();
-    displayResult(result.advice, data.queryType, data);
+    if (backendUrl) {
+      const response = await fetch(`${backendUrl}/api/farming/advice`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Google-AI-API-Key': apiKey
+        },
+        body: JSON.stringify({ prompt, queryType: data.queryType, farmData: data })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        advice = result?.advice || '';
+      }
+    }
+
+    if (!advice) {
+      advice = await callGeminiText(prompt, apiKey);
+    }
+
+    setCachedResponse('advice', cachePayload, advice);
+    displayResult(advice, data.queryType, data);
     saveToHistory({ type: data.queryType, state: data.state, soilType: data.soilType });
   } catch (err) {
     console.error('AI Advice error:', err);
@@ -485,26 +645,38 @@ async function sendMessage() {
   if (sendBtn) sendBtn.disabled = true;
 
   try {
-    const backendUrl = await resolveBackendUrl();
-    const response = await fetch(`${backendUrl}/api/farming/chat`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Google-AI-API-Key': apiKey,
-      },
-      body: JSON.stringify({ messages: chatHistory })
-    });
-
-    removeTyping(typingId);
-
-    if (!response.ok) {
-      const err = await response.json();
-      appendBotMessage(`⚠️ ${err.error || err.message || 'Something went wrong. Please try again.'}`);
+    const cached = getCachedResponse('chat', { messages: chatHistory });
+    if (cached) {
+      removeTyping(typingId);
+      chatHistory.push({ role: 'assistant', content: cached });
+      appendBotMessage(cached);
+      showToast('Chat loaded from smart cache.');
       return;
     }
 
-    const data = await response.json();
-    const reply = data.message || 'Sorry, I could not generate a response.';
+    let reply = null;
+    const backendUrl = await resolveBackendUrl();
+    if (backendUrl) {
+      const response = await fetch(`${backendUrl}/api/farming/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Google-AI-API-Key': apiKey,
+        },
+        body: JSON.stringify({ messages: chatHistory })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        reply = data.message || null;
+      }
+    }
+
+    if (!reply) {
+      reply = await callGeminiChat(chatHistory, apiKey);
+    }
+
+    removeTyping(typingId);
+    setCachedResponse('chat', { messages: chatHistory }, reply);
     chatHistory.push({ role: 'assistant', content: reply });
     appendBotMessage(reply);
 
