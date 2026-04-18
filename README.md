@@ -80,6 +80,8 @@ After deploy:
 - Backend now enforces allowlisted CORS when `FRONTEND_URL` is set (comma-separated allowed origins).
 - Backend sets baseline security headers (frame, referrer, mime-sniff, permissions, and HSTS on HTTPS).
 - Add your production frontend domain(s) to `FRONTEND_URL` in backend env.
+- Added root [_config.yml](_config.yml) and [.nojekyll](.nojekyll) so branch-based Pages/Jekyll builds do not parse backend dependencies.
+- `backend/node_modules` must never be tracked in git; dependencies should be installed during runtime/CI only.
 
 ## Usage
 

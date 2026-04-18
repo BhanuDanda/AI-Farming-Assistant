@@ -1,0 +1,18 @@
+title: KrishiAI
+markdown: kramdown
+
+exclude:
+  - backend
+  - backend/node_modules
+  - node_modules
+  - .github
+  - vendor
+
+include:
+  - index.html
+  - login.html
+  - script.js
+  - style.css
+  - frontend
+  - 404.html
+  - .nojekyll
