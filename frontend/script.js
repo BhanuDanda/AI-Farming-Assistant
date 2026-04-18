@@ -123,11 +123,11 @@ function syncApiKeyBanner() {
   if (input && input.value !== storedKey) input.value = storedKey;
   if (status) {
     status.textContent = storedKey
-      ? 'API key saved locally in this browser.'
+      ? 'API key saved locally in this browser. You can replace it anytime below.'
       : 'Enter your Google AI API key to enable crop, disease, and fertilizer advice.';
   }
   if (saveBtn) saveBtn.textContent = storedKey ? 'Update Key' : 'Save Key';
-  banner.classList.toggle('hidden', Boolean(storedKey));
+  banner.classList.remove('hidden');
 }
 
 function saveApiKey() {
@@ -150,6 +150,20 @@ function clearApiKey() {
 
 function getActiveGoogleAiKey() {
   return getStoredGoogleAiKey();
+}
+
+function isApiKeyError(message) {
+  return /api\s*key|invalid\s*key|key\s*invalid|expired|revoked|leak|compromised|not\s*valid|permission denied|unauthori|forbidden/i.test(message || '');
+}
+
+function normalizeAiErrorMessage(error) {
+  const raw = (error?.message || '').trim();
+  if (isApiKeyError(raw)) {
+    clearApiKey();
+    return 'Your API key was rejected or reported as leaked. Please paste a new key and try again.';
+  }
+  if (raw) return raw;
+  return 'Request failed. Please check your internet connection and try again.';
 }
 
 async function resolveBackendUrl() {
@@ -496,7 +510,7 @@ async function getAIAdvice(data) {
     saveToHistory({ type: data.queryType, state: data.state, soilType: data.soilType });
   } catch (err) {
     console.error('AI Advice error:', err);
-    const message = err?.message || 'Unable to connect to the server. Please ensure the backend is running and reachable at http://localhost:3000.';
+    const message = normalizeAiErrorMessage(err);
     showResultPanel('error', message);
   } finally {
     setLoading(false);
@@ -683,7 +697,7 @@ async function sendMessage() {
   } catch (err) {
     removeTyping(typingId);
     console.error('Chatbot error:', err);
-    appendBotMessage('⚠️ Network error. Please check your internet connection and ensure the backend is running at http://localhost:3000.');
+    appendBotMessage(`⚠️ ${normalizeAiErrorMessage(err)}`);
   } finally {
     if (sendBtn) sendBtn.disabled = false;
     input.focus();
