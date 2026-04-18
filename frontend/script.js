@@ -256,6 +256,21 @@ function closeDropdown() {
   document.getElementById('userDropdown').classList.remove('open');
 }
 
+function openApiKeySettings() {
+  const banner = document.getElementById('apiKeyBanner');
+  if (!banner) return;
+  banner.classList.remove('hidden');
+  closeDropdown();
+  banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(() => {
+    const input = document.getElementById('apiKeyInput');
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  }, 180);
+}
+
 // ── INIT ─────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   const user = authGuard();

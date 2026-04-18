@@ -30,6 +30,7 @@
     </ul>
     <div class="nav-actions">
       <span class="lang-badge">🇮🇳 EN</span>
+      <button class="btn-key" type="button" onclick="openApiKeySettings()"><i class="fa fa-key"></i> Change API Key</button>
       <div class="user-pill" id="userPill">
         <div class="user-avatar">🧑‍🌾</div>
         <span class="user-name" id="userName">Farmer</span>
@@ -38,6 +39,7 @@
           <div class="ud-header" id="udHeader"></div>
           <a href="#dashboard" class="ud-item" onclick="closeDropdown()"><i class="fa fa-tachometer-alt"></i> Dashboard</a>
           <a href="#assistant" class="ud-item" onclick="closeDropdown()"><i class="fa fa-robot"></i> AI Assistant</a>
+          <a href="#" class="ud-item" onclick="openApiKeySettings(); return false;"><i class="fa fa-key"></i> Change API Key</a>
           <div class="ud-divider"></div>
           <a href="#" class="ud-item ud-logout" onclick="handleLogout()"><i class="fa fa-sign-out-alt"></i> Sign Out</a>
         </div>

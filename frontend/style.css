@@ -38,6 +38,8 @@ em{font-style:italic;color:var(--green-mid)}
 .nav-links a:hover::after,.nav-links a.active::after{width:100%}
 .nav-actions{display:flex;align-items:center;gap:12px}
 .lang-badge{font-size:0.78rem;font-weight:600;background:var(--green-deep);color:var(--cream);padding:5px 12px;border-radius:20px}
+.btn-key{display:inline-flex;align-items:center;gap:7px;padding:8px 13px;border-radius:20px;border:1px solid rgba(82,183,136,0.3);background:rgba(82,183,136,0.12);color:var(--green-deep);font-family:'DM Sans',sans-serif;font-size:0.76rem;font-weight:700;cursor:pointer;transition:all var(--transition)}
+.btn-key:hover{background:rgba(82,183,136,0.2);border-color:rgba(82,183,136,0.5);transform:translateY(-1px)}
 
 /* USER PILL */
 .user-pill{display:flex;align-items:center;gap:8px;padding:6px 14px;background:rgba(82,183,136,0.1);border:1px solid rgba(82,183,136,0.25);border-radius:30px;cursor:pointer;position:relative;transition:all var(--transition)}
@@ -338,6 +340,7 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
 }
 @media(max-width:768px){
   .navbar{padding:12px 20px}.nav-links{display:none}
+  .btn-key{display:none}
   .api-key-banner{margin:76px 12px 0}
   .akb-actions{margin-left:0;width:100%;justify-content:flex-end}
   .akb-input{max-width:none;width:100%}
