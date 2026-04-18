@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KrishiAI — Smart Farming Assistant</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+
+  <div class="bg-scene">
+    <div class="bg-orb orb1"></div><div class="bg-orb orb2"></div><div class="bg-orb orb3"></div>
+    <div class="grain"></div>
+  </div>
+
+  <!-- NAVBAR -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-brand">
+      <span class="brand-icon">🌾</span>
+      <span class="brand-text">KrishiAI</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#home" class="active">Home</a></li>
+      <li><a href="#dashboard">Dashboard</a></li>
+      <li><a href="#assistant">Assistant</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#about">About</a></li>
+    </ul>
+    <div class="nav-actions">
+      <span class="lang-badge">🇮🇳 EN</span>
+      <div class="user-pill" id="userPill">
+        <div class="user-avatar">🧑‍🌾</div>
+        <span class="user-name" id="userName">Farmer</span>
+        <i class="fa fa-chevron-down" style="font-size:0.7rem;color:var(--text-light)"></i>
+        <div class="user-dropdown" id="userDropdown">
+          <div class="ud-header" id="udHeader"></div>
+          <a href="#dashboard" class="ud-item" onclick="closeDropdown()"><i class="fa fa-tachometer-alt"></i> Dashboard</a>
+          <a href="#assistant" class="ud-item" onclick="closeDropdown()"><i class="fa fa-robot"></i> AI Assistant</a>
+          <div class="ud-divider"></div>
+          <a href="#" class="ud-item ud-logout" onclick="handleLogout()"><i class="fa fa-sign-out-alt"></i> Sign Out</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero" id="home">
+    <div class="hero-content">
+      <div class="hero-tag">🌱 AI-Powered Agriculture</div>
+      <h1 class="hero-title">Smart Farming<br/><em>Starts Here</em></h1>
+      <p class="hero-subtitle">Get crop suggestions, disease diagnosis, and fertilizer guidance — tailored to your soil, season, and region.</p>
+      <div class="hero-cta">
+        <a href="#assistant" class="btn-primary"><i class="fa fa-seedling"></i> Get AI Advice</a>
+        <a href="#dashboard" class="btn-ghost">My Dashboard →</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><span class="stat-num">12K+</span><span class="stat-label">Farmers Helped</span></div>
+        <div class="stat-div"></div>
+        <div class="stat"><span class="stat-num">98%</span><span class="stat-label">Accuracy Rate</span></div>
+        <div class="stat-div"></div>
+        <div class="stat"><span class="stat-num">40+</span><span class="stat-label">Crops Supported</span></div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-card-float card-top">
+        <span class="card-icon">🌡️</span>
+        <div><div class="card-label">Soil Temp</div><div class="card-value">28°C — Optimal</div></div>
+      </div>
+      <div class="hero-image-wrap">
+        <div class="field-illustration">
+          <div class="sun-ring"></div>
+          <div class="field-rows">
+            <div class="row r1"></div><div class="row r2"></div>
+            <div class="row r3"></div><div class="row r4"></div><div class="row r5"></div>
+          </div>
+          <div class="crop-icons">
+            <span class="crop-icon ci1">🌽</span><span class="crop-icon ci2">🌾</span>
+            <span class="crop-icon ci3">🍅</span><span class="crop-icon ci4">🥦</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-card-float card-bottom">
+        <span class="card-icon">🤖</span>
+        <div><div class="card-label">AI Suggestion</div><div class="card-value">Grow Wheat this season</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section class="dashboard-section" id="dashboard">
+    <div class="section-label">My Farm Dashboard</div>
+    <h2 class="section-title">Welcome back,<br/><em id="dashName">Farmer</em> 👋</h2>
+    <div class="dash-stats">
+      <div class="dash-stat-card">
+        <div class="dsc-icon">🌾</div>
+        <div class="dsc-info"><div class="dsc-num" id="statQueries">0</div><div class="dsc-label">AI Queries Made</div></div>
+        <div class="dsc-trend up"><i class="fa fa-arrow-up"></i> Today</div>
+      </div>
+      <div class="dash-stat-card">
+        <div class="dsc-icon">🌱</div>
+        <div class="dsc-info"><div class="dsc-num" id="statCrops">3</div><div class="dsc-label">Crops Suggested</div></div>
+        <div class="dsc-trend up"><i class="fa fa-arrow-up"></i> This season</div>
+      </div>
+      <div class="dash-stat-card">
+        <div class="dsc-icon">🦠</div>
+        <div class="dsc-info"><div class="dsc-num" id="statDisease">1</div><div class="dsc-label">Diseases Diagnosed</div></div>
+        <div class="dsc-trend neutral"><i class="fa fa-minus"></i> This week</div>
+      </div>
+      <div class="dash-stat-card">
+        <div class="dsc-icon">🧪</div>
+        <div class="dsc-info"><div class="dsc-num" id="statFertilizer">2</div><div class="dsc-label">Fertilizer Plans</div></div>
+        <div class="dsc-trend up"><i class="fa fa-arrow-up"></i> This month</div>
+      </div>
+    </div>
+    <div class="dash-grid">
+      <div class="dash-card dash-actions-card">
+        <div class="dc-header"><i class="fa fa-bolt"></i> Quick Actions</div>
+        <div class="quick-actions">
+          <a href="#assistant" class="qa-btn" onclick="preselectQuery('crop')"><span class="qa-icon">🌱</span><span class="qa-label">Get Crop Advice</span></a>
+          <a href="#assistant" class="qa-btn" onclick="preselectQuery('disease')"><span class="qa-icon">🦠</span><span class="qa-label">Diagnose Disease</span></a>
+          <a href="#assistant" class="qa-btn" onclick="preselectQuery('fertilizer')"><span class="qa-icon">🧪</span><span class="qa-label">Fertilizer Plan</span></a>
+          <a href="#" class="qa-btn" onclick="openChatbot(); return false;"><span class="qa-icon">💬</span><span class="qa-label">Ask AI Chatbot</span></a>
+        </div>
+      </div>
+      <div class="dash-card dash-weather-card">
+        <div class="dc-header"><i class="fa fa-cloud-sun"></i> Today's Conditions</div>
+        <div class="weather-body">
+          <div class="weather-main"><span class="weather-icon">☀️</span><div><div class="weather-temp">32°C</div><div class="weather-desc">Clear & Sunny</div></div></div>
+          <div class="weather-details">
+            <div class="wd-item"><i class="fa fa-tint"></i><span>Humidity: 58%</span></div>
+            <div class="wd-item"><i class="fa fa-wind"></i><span>Wind: 12 km/h</span></div>
+            <div class="wd-item"><i class="fa fa-cloud-rain"></i><span>Rain: 0%</span></div>
+            <div class="wd-item"><i class="fa fa-sun"></i><span>UV: High</span></div>
+          </div>
+          <div class="weather-advice">🌾 Good day for irrigation and fertilizer application</div>
+        </div>
+      </div>
+      <div class="dash-card dash-history-card">
+        <div class="dc-header"><i class="fa fa-history"></i> Recent AI Advice <span class="dc-badge" id="historyCount">0</span></div>
+        <div class="history-list" id="historyList">
+          <div class="history-empty" id="historyEmpty">
+            <span>🌾</span>
+            <p>No queries yet. Use the AI Assistant to get started!</p>
+            <a href="#assistant" class="btn-primary" style="font-size:0.8rem;padding:10px 18px;text-decoration:none">Ask AI Now</a>
+          </div>
+        </div>
+      </div>
+      <div class="dash-card dash-season-card">
+        <div class="dc-header"><i class="fa fa-calendar-alt"></i> Crop Season Calendar</div>
+        <div class="season-list">
+          <div class="season-item">
+            <div class="si-dot rabi"></div>
+            <div class="si-info"><div class="si-name">Rabi Season</div><div class="si-period">Oct — Mar · Wheat, Mustard, Peas</div></div>
+            <div class="si-badge active">Current</div>
+          </div>
+          <div class="season-item">
+            <div class="si-dot kharif"></div>
+            <div class="si-info"><div class="si-name">Kharif Season</div><div class="si-period">Jun — Sep · Rice, Cotton, Sugarcane</div></div>
+            <div class="si-badge upcoming">Upcoming</div>
+          </div>
+          <div class="season-item">
+            <div class="si-dot zaid"></div>
+            <div class="si-info"><div class="si-name">Zaid Season</div><div class="si-period">Mar — Jun · Cucumber, Watermelon</div></div>
+            <div class="si-badge upcoming">Upcoming</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features" id="features">
+    <div class="section-label">What We Offer</div>
+    <h2 class="section-title">Three Pillars of<br/><em>Smart Farming</em></h2>
+    <div class="features-grid">
+      <div class="feature-card fc1">
+        <div class="fc-icon">🌱</div>
+        <h3>Crop Suggestions</h3>
+        <p>Enter your soil type, pH, water availability, and region — get AI-recommended crops optimised for maximum yield.</p>
+        <div class="fc-tag">Powered by Google AI</div>
+      </div>
+      <div class="feature-card fc2">
+        <div class="fc-icon">🦠</div>
+        <h3>Disease Detection</h3>
+        <p>Describe symptoms or (coming soon) upload a photo of your crop. Get instant diagnosis and treatment guidance.</p>
+        <div class="fc-tag">NLP + Vision (Soon)</div>
+      </div>
+      <div class="feature-card fc3">
+        <div class="fc-icon">🧪</div>
+        <h3>Fertilizer Advice</h3>
+        <p>Receive precise fertilizer recommendations based on soil nutrients and the crop you're growing.</p>
+        <div class="fc-tag">Science-backed Advice</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI ASSISTANT -->
+  <section class="assistant-section" id="assistant">
+    <div class="section-label">AI Assistant</div>
+    <h2 class="section-title">Tell Us About<br/><em>Your Farm</em></h2>
+    <div class="assistant-layout">
+      <div class="form-panel">
+        <div class="form-steps">
+          <div class="step active" data-step="1"><span>1</span> Soil & Location</div>
+          <div class="step-line"></div>
+          <div class="step" data-step="2"><span>2</span> Conditions</div>
+          <div class="step-line"></div>
+          <div class="step" data-step="3"><span>3</span> Query Type</div>
+        </div>
+        <form id="farmForm">
+          <div class="form-step active" id="step1">
+            <div class="form-row">
+              <div class="form-group">
+                <label><i class="fa fa-map-marker-alt"></i> State / Region</label>
+                <select name="state" required>
+                  <option value="">Select your state</option>
+                  <optgroup label="States">
+                    <option>Andhra Pradesh</option>
+                    <option>Arunachal Pradesh</option>
+                    <option>Assam</option>
+                    <option>Bihar</option>
+                    <option>Chhattisgarh</option>
+                    <option>Goa</option>
+                    <option>Gujarat</option>
+                    <option>Haryana</option>
+                    <option>Himachal Pradesh</option>
+                    <option>Jharkhand</option>
+                    <option>Karnataka</option>
+                    <option>Kerala</option>
+                    <option>Madhya Pradesh</option>
+                    <option>Maharashtra</option>
+                    <option>Manipur</option>
+                    <option>Meghalaya</option>
+                    <option>Mizoram</option>
+                    <option>Nagaland</option>
+                    <option>Odisha</option>
+                    <option>Punjab</option>
+                    <option>Rajasthan</option>
+                    <option>Sikkim</option>
+                    <option>Tamil Nadu</option>
+                    <option>Telangana</option>
+                    <option>Tripura</option>
+                    <option>Uttar Pradesh</option>
+                    <option>Uttarakhand</option>
+                    <option>West Bengal</option>
+                  </optgroup>
+                  <optgroup label="Union Territories">
+                    <option>Andaman and Nicobar Islands</option>
+                    <option>Chandigarh</option>
+                    <option>Dadra and Nagar Haveli and Daman and Diu</option>
+                    <option>Lakshadweep</option>
+                    <option>Delhi</option>
+                    <option>Puducherry</option>
+                    <option>Ladakh</option>
+                    <option>Jammu and Kashmir</option>
+                  </optgroup>
+                </select>
+              </div>
+              <div class="form-group">
+                <label><i class="fa fa-layer-group"></i> Soil Type</label>
+                <select name="soilType" required>
+                  <option value="">Select soil type</option>
+                  <option>Alluvial Soil</option><option>Black Cotton Soil</option>
+                  <option>Red & Laterite Soil</option><option>Sandy Soil</option>
+                  <option>Loamy Soil</option><option>Clay Soil</option><option>Saline Soil</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label><i class="fa fa-flask"></i> Soil pH Level</label>
+                <div class="slider-group">
+                  <input type="range" name="soilPh" min="3" max="10" value="6.5" step="0.1" id="phSlider"/>
+                  <span class="slider-val" id="phVal">6.5</span>
+                </div>
+                <div class="ph-bar"><span class="ph-label">Acidic</span><span class="ph-label">Neutral</span><span class="ph-label">Alkaline</span></div>
+              </div>
+              <div class="form-group">
+                <label><i class="fa fa-ruler-combined"></i> Land Area (acres)</label>
+                <input type="number" name="landArea" placeholder="e.g. 2.5" min="0.1" step="0.1"/>
+              </div>
+            </div>
+            <button type="button" class="btn-next" onclick="nextStep(1)">Next: Conditions <i class="fa fa-arrow-right"></i></button>
+          </div>
+          <div class="form-step" id="step2">
+            <div class="form-row">
+              <div class="form-group">
+                <label><i class="fa fa-cloud-sun"></i> Season</label>
+                <div class="radio-group">
+                  <label class="radio-option"><input type="radio" name="season" value="Kharif"/> <span>🌧️ Kharif</span></label>
+                  <label class="radio-option"><input type="radio" name="season" value="Rabi"/> <span>❄️ Rabi</span></label>
+                  <label class="radio-option"><input type="radio" name="season" value="Zaid"/> <span>☀️ Zaid</span></label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label><i class="fa fa-tint"></i> Irrigation Method</label>
+                <select name="irrigation">
+                  <option value="">Select method</option>
+                  <option>Drip Irrigation</option><option>Sprinkler</option>
+                  <option>Flood/Canal</option><option>Rainfed Only</option><option>Borewell</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label><i class="fa fa-thermometer-half"></i> Temperature (°C)</label>
+                <div class="slider-group">
+                  <input type="range" name="temperature" min="5" max="50" value="28" id="tempSlider"/>
+                  <span class="slider-val" id="tempVal">28°C</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label><i class="fa fa-cloud-rain"></i> Annual Rainfall (mm)</label>
+                <input type="number" name="rainfall" placeholder="e.g. 800"/>
+              </div>
+            </div>
+            <div class="form-group">
+              <label><i class="fa fa-seedling"></i> Previous Crop (optional)</label>
+              <input type="text" name="prevCrop" placeholder="e.g. Rice, Maize, Cotton..."/>
+            </div>
+            <div class="step-nav">
+              <button type="button" class="btn-back" onclick="prevStep(2)"><i class="fa fa-arrow-left"></i> Back</button>
+              <button type="button" class="btn-next" onclick="nextStep(2)">Next: Query Type <i class="fa fa-arrow-right"></i></button>
+            </div>
+          </div>
+          <div class="form-step" id="step3">
+            <div class="form-group">
+              <label><i class="fa fa-robot"></i> What do you need advice on?</label>
+              <div class="query-types">
+                <label class="query-option" id="qoCrop"><input type="radio" name="queryType" value="crop"/>
+                  <div class="qo-inner"><span class="qo-icon">🌱</span><span class="qo-title">Crop Suggestion</span><span class="qo-desc">Best crops for my conditions</span></div>
+                </label>
+                <label class="query-option" id="qoDisease"><input type="radio" name="queryType" value="disease"/>
+                  <div class="qo-inner"><span class="qo-icon">🦠</span><span class="qo-title">Disease Detection</span><span class="qo-desc">Identify crop illness & cure</span></div>
+                </label>
+                <label class="query-option" id="qoFertilizer"><input type="radio" name="queryType" value="fertilizer"/>
+                  <div class="qo-inner"><span class="qo-icon">🧪</span><span class="qo-title">Fertilizer Advice</span><span class="qo-desc">Nutrient plan for my soil</span></div>
+                </label>
+              </div>
+            </div>
+            <div class="form-group disease-extra hidden" id="diseaseExtra">
+              <label><i class="fa fa-stethoscope"></i> Describe the symptoms</label>
+              <textarea name="symptoms" rows="3" placeholder="e.g. Yellow leaves, brown spots, wilting at base..."></textarea>
+            </div>
+            <div class="form-group crop-extra hidden" id="cropExtra">
+              <label><i class="fa fa-leaf"></i> Current / Target Crop (optional)</label>
+              <input type="text" name="targetCrop" placeholder="e.g. Wheat, Rice, Tomato..."/>
+            </div>
+            <div class="step-nav">
+              <button type="button" class="btn-back" onclick="prevStep(3)"><i class="fa fa-arrow-left"></i> Back</button>
+              <button type="submit" class="btn-submit" id="submitBtn">
+                <span id="submitText"><i class="fa fa-brain"></i> Get AI Advice</span>
+                <span id="submitLoader" class="hidden"><i class="fa fa-spinner fa-spin"></i> Analysing...</span>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="result-panel" id="resultPanel">
+        <div class="result-idle" id="resultIdle">
+          <div class="idle-illustration"><div class="idle-circle"><span class="idle-emoji">🌾</span></div></div>
+          <h3>Your AI Advice<br/>Will Appear Here</h3>
+          <p>Fill in the form and submit to get personalised crop, disease, or fertilizer guidance.</p>
+        </div>
+        <div class="result-content hidden" id="resultContent">
+          <div class="result-header">
+            <div class="result-icon" id="resultIcon">🌱</div>
+            <div><div class="result-type" id="resultType">Crop Suggestion</div><div class="result-meta" id="resultMeta">Based on your farm data</div></div>
+            <button class="result-reset" onclick="resetForm()"><i class="fa fa-redo"></i></button>
+          </div>
+          <div class="result-body" id="resultBody"></div>
+          <div class="result-footer">
+            <button class="btn-feedback good" onclick="feedback('good')"><i class="fa fa-thumbs-up"></i> Helpful</button>
+            <button class="btn-feedback bad" onclick="feedback('bad')"><i class="fa fa-thumbs-down"></i> Not Helpful</button>
+            <button class="btn-copy" onclick="copyResult()"><i class="fa fa-copy"></i> Copy</button>
+          </div>
+        </div>
+        <div class="result-error hidden" id="resultError">
+          <div class="error-icon">⚠️</div>
+          <h3>Something went wrong</h3>
+          <p id="errorMsg">Unable to connect. Please ensure the backend is running.</p>
+          <button class="btn-primary" onclick="resetResult()">Try Again</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="about-section" id="about">
+    <div class="about-inner">
+      <div class="about-text">
+        <div class="section-label">About KrishiAI</div>
+        <h2 class="section-title">What is<br/><em>KrishiAI?</em></h2>
+        <p>KrishiAI is an AI-powered farming assistant designed to help Indian farmers make smarter decisions. Simply enter your soil type, region, and season — and get instant, science-backed advice on what to grow, what's wrong with your crops, and how to nourish your soil.</p>
+        <p>No agricultural degree needed. No expensive consultants. Just practical, personalised guidance — available 24/7, completely free.</p>
+        <div class="about-tags">
+          <span class="tag">🌱 Free for Farmers</span>
+          <span class="tag">📱 Works on Mobile</span>
+          <span class="tag">🇮🇳 India-First Design</span>
+        </div>
+      </div>
+      <div class="about-visual">
+        <div class="about-card">
+          <div class="ac-row"><span class="ac-icon">🌾</span><div><strong>What it does</strong><br/>Gives personalised crop, disease & fertilizer advice based on your exact farm conditions</div></div>
+          <div class="ac-row"><span class="ac-icon">👨‍🌾</span><div><strong>Who it's for</strong><br/>Small and medium farmers across India — especially those without easy access to expert advice</div></div>
+          <div class="ac-row"><span class="ac-icon">🚀</span><div><strong>Coming soon</strong><br/>Upload a photo of your crop and get instant AI disease diagnosis</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand"><span class="brand-icon">🌾</span><span class="brand-text">KrishiAI</span></div>
+      <p class="footer-note">AI advice is indicative. Always consult a local agronomist for critical decisions.</p>
+      <p class="footer-credit">Built with 💚 for rural India · Powered by Google AI</p>
+    </div>
+  </footer>
+
+  <!-- CHATBOT BUBBLE -->
+  <div class="chatbot-bubble" id="chatbotBubble" onclick="toggleChatbot()">
+    <div class="bubble-icon"><span>💬</span><div class="bubble-pulse"></div></div>
+    <div class="bubble-tooltip">Ask KrishiAI</div>
+  </div>
+
+  <!-- CHATBOT WIDGET -->
+  <div class="chatbot-widget hidden" id="chatbotWidget">
+    <div class="cw-header">
+      <div class="cw-brand">
+        <div class="cw-avatar">🌾</div>
+        <div>
+          <div class="cw-title">KrishiAI Assistant</div>
+          <div class="cw-status"><span class="status-dot"></span> Online · Google AI</div>
+        </div>
+      </div>
+      <div class="cw-actions">
+        <button class="cw-btn" onclick="clearChat()" title="Clear"><i class="fa fa-trash"></i></button>
+        <button class="cw-btn" onclick="toggleChatbot()" title="Close"><i class="fa fa-times"></i></button>
+      </div>
+    </div>
+    <div class="cw-messages" id="cwMessages">
+      <div class="cw-msg bot">
+        <div class="cw-msg-avatar">🌾</div>
+        <div class="cw-msg-bubble">
+          Namaskar! 🙏 I'm KrishiAI, your smart farming assistant.<br/><br/>Ask me anything about crops, diseases, or fertilizers!
+          <div class="quick-chips">
+            <span class="chip" onclick="sendQuick('Best crops for Punjab in Rabi season?')">🌱 Crop advice</span>
+            <span class="chip" onclick="sendQuick('My wheat leaves are turning yellow. What disease is this?')">🦠 Disease help</span>
+            <span class="chip" onclick="sendQuick('Fertilizer plan for rice on clay soil')">🧪 Fertilizer</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="cw-input-area">
+      <div class="cw-input-row">
+        <input type="text" id="cwInput" placeholder="Ask about crops, diseases, fertilizers..." onkeydown="if(event.key==='Enter' && !event.shiftKey){sendMessage();event.preventDefault();}"/>
+        <button class="cw-send" id="cwSendBtn" onclick="sendMessage()"><i class="fa fa-paper-plane"></i></button>
+      </div>
+      <div class="cw-footer-note">Powered by Google AI · KrishiAI</div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
